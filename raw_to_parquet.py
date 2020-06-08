@@ -30,8 +30,9 @@ query = """
         internal.scalez_events
     WHERE
         event = 'UserPickedProductTypes'
-        and from_iso8601_timestamp(timestamp) >= timestamp '{{ prev_execution_date }}' 
-        and from_iso8601_timestamp(timestamp) <= timestamp '{{ execution_date }}' 
+        and from_iso8601_timestamp(timestamp) >= 
+        from_iso8601_timestamp('{{ execution_date - macros.timedelta(hour=1) }}')
+        and from_iso8601_timestamp(timestamp) <= timestamp from_iso8601_timestamp('{{ execution_date }}')
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
