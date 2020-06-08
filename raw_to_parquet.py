@@ -11,6 +11,7 @@ from airflow.hooks.S3_hook import S3Hook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
+
 class S3FileTransformOperator(BaseOperator):
 
     template_fields = ('source_s3_key', 'dest_s3_key')
@@ -75,7 +76,9 @@ class S3FileTransformOperator(BaseOperator):
             f_source.flush()
 
             if self.transform_script is not None:
-                print(subprocess.run(["ls", "-l"]))
+                result = subprocess.run(["ls", "-l"])
+                print(result.stdout)
+                print(result.stderr)
                 process = subprocess.Popen(
                     [self.transform_script, f_source.name, f_dest.name],
                     stdout=subprocess.PIPE,
