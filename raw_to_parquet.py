@@ -17,7 +17,7 @@ Dag = DAG(
     start_date=datetime(2019, 6, 7)
 )
 
-
+bucket_name = "scalez-airflow"
 query = """
     SELECT
     from_iso8601_timestamp(timestamp),
@@ -37,7 +37,7 @@ with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
         task_id='run_query',
         query=query,
-        output_location='s3://airflow/{{ task_instance_key_str }}/',
+        output_location=f's3://{bucket_name}/{{ task_instance_key_str }}/',
         database='my_database'
     )
 
