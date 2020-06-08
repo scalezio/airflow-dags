@@ -31,7 +31,7 @@ query = """
     WHERE
         event = 'UserPickedProductTypes'
         and from_iso8601_timestamp(timestamp) >= 
-        from_iso8601_timestamp('{{ execution_date - macros.timedelta(hour=1) }}')
+        from_iso8601_timestamp('{{ execution_date - macros.timedelta(hours=1) }}')
         and from_iso8601_timestamp(timestamp) <= timestamp from_iso8601_timestamp('{{ execution_date }}')
 """
 with Dag as dag:
