@@ -76,7 +76,7 @@ class S3FileTransformOperator(BaseOperator):
             f_source.flush()
 
             if self.transform_script is not None:
-                result = subprocess.run(["ls", "-l"])
+                result = subprocess.run(["ls", "-l"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
                 process = subprocess.Popen(
