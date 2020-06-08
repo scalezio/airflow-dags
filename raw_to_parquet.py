@@ -37,15 +37,15 @@ with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
         task_id='run_query',
         query=query,
-        output_location=f's3://{bucket_name}/{{ task_instance_key_str }}/',
+        output_location='s3://scalez-airflow/{{ task_instance_key_str }}/',
         database='my_database'
     )
 
-    # move_results = S3FileTransformOperator(
-    #     task_id='move_results',
-    #     source_s3_key='s3://airflow/{{ task_instance_key_str }}/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
-    #     dest_s3_key='s3://mybucket/otherpath/myresults.parquet',
-    #     transform_script='csv_to_parquet.py'
-    # )
-run_query
-# move_results.set_upstream(run_query)
+    move_results = S3FileTransformOperator(
+        task_id='move_results',
+        source_s3_key='s3://scalez-airflow/{{ task_instance_key_str }}/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
+        dest_s3_key='s3://scalez-airflow/sessions/date={{ execution_date - macros.timedelta(hours=1) }}/{{task_instance_key_str}}.parquet',
+        transform_script='csv_to_parquet.py'
+    )
+
+move_results.set_upstream(run_query)
