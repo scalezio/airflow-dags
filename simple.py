@@ -3,6 +3,7 @@ import datetime as dt
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator
+from airflow.utils.dates import days_ago
 
 
 def greet():
@@ -20,7 +21,7 @@ def respond():
 
 default_args = {
     'owner': 'airflow',
-    'start_date': dt.datetime(2020, 6, 08, 10, 00, 00),
+    'start_date': days_ago(1),
     'concurrency': 1,
     'retries': 5
 }
