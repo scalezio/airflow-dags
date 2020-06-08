@@ -79,6 +79,7 @@ class S3FileTransformOperator(BaseOperator):
                 result = subprocess.run(["ls", "-l"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
+                subprocess.run([f"chmod +x dags/{self.transform_script}"])
                 process = subprocess.Popen(
                     [f'dags/{self.transform_script}', f_source.name, f_dest.name],
                     stdout=subprocess.PIPE,
