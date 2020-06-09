@@ -92,7 +92,7 @@ class S3FileTransformOperator(BaseOperator):
                 print(result.stdout)
                 print(result.stderr)
                 process = subprocess.Popen(
-                    [f'{dir}/dags/{self.transform_script}', f_source.name, f_dest.name],
+                    [f'{dir}/{self.transform_script}', f_source.name, f_dest.name],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     close_fds=True
