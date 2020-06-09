@@ -1,4 +1,5 @@
-import pandas as pd
-import sys
-
-pd.read_csv(sys.argv[1]).to_parquet(sys.argv[2])
+print("hello")
+# import pandas as pd
+# import sys
+#
+# pd.read_csv(sys.argv[1]).to_parquet(sys.argv[2])
