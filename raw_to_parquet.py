@@ -43,9 +43,6 @@ class S3CSVtoParquet(BaseOperator):
         self.output_encoding = sys.getdefaultencoding()
 
     def execute(self, context):
-        if self.transform_script is None and self.select_expression is None:
-            raise AirflowException(
-                "Either transform_script or select_expression must be specified")
 
         source_s3 = S3Hook(aws_conn_id=self.source_aws_conn_id,
                            verify=self.source_verify)
@@ -63,15 +60,7 @@ class S3CSVtoParquet(BaseOperator):
                 "Dumping S3 file %s contents to local file %s",
                 self.source_s3_key, f_source.name
             )
-
-            if self.select_expression is not None:
-                content = source_s3.select_key(
-                    key=self.source_s3_key,
-                    expression=self.select_expression
-                )
-                f_source.write(content.encode("utf-8"))
-            else:
-                source_s3_key_object.download_fileobj(Fileobj=f_source)
+            source_s3_key_object.download_fileobj(Fileobj=f_source)
             f_source.flush()
 
             # transform to parquet
