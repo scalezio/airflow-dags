@@ -82,11 +82,14 @@ class S3FileTransformOperator(BaseOperator):
                                         universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
-                subprocess.Popen(["chown", "airflow:airflow", f"{dir}/{self.transform_script}"])
-                result = subprocess.Popen(["who"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # subprocess.Popen(["chown", "airflow:airflow", f"{dir}/{self.transform_script}"])
+                # result = subprocess.Popen(["who"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # print(result.stdout)
+                # print(result.stderr)
+                result = subprocess.Popen(["chmod", "0755 ", f"{dir}/{self.transform_script}"],
+                                 universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
-                subprocess.Popen(["chmod", "+x ", f"{dir}/{self.transform_script}"])
                 result = subprocess.run(["ls", "-l", dir], universal_newlines=True, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
                 print(result.stdout)
