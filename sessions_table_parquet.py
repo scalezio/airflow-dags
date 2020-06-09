@@ -84,7 +84,7 @@ class XComEnabledAWSAthenaOperator(AWSAthenaOperator):
 
 
 default_args = {
-    'owner': 'Airflow',
+    'owner': 'scalez',
     'depends_on_past': True,
     'start_date': datetime(2020, 6, 8),
     'email': ['daniel@scalez.io'],
@@ -95,7 +95,7 @@ default_args = {
     'schedule_interval': '@daily',
 }
 
-Dag = DAG('tutorial', catchup=True, default_args=default_args)
+Dag = DAG('sessions_table_builder', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
