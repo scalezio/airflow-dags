@@ -1,7 +1,7 @@
 from airflow.models import DAG
 from airflow.contrib.operators.aws_athena_operator import AWSAthenaOperator
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from tempfile import NamedTemporaryFile
 import sys
 
@@ -83,11 +83,19 @@ class XComEnabledAWSAthenaOperator(AWSAthenaOperator):
         return self.query_execution_id
 
 
-Dag = DAG(
-    dag_id='athena_query_and_move',
-    schedule_interval=None,
-    start_date=datetime(2019, 6, 7)
-)
+default_args = {
+    'owner': 'Airflow',
+    'depends_on_past': True,
+    'start_date': datetime(2020, 6, 8),
+    'email': ['daniel@scalez.io'],
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 2,
+    'retry_delay': timedelta(minutes=5),
+    'schedule_interval': '@daily',
+}
+
+Dag = DAG('tutorial', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
@@ -102,7 +110,7 @@ query = """
         internal.scalez_events
     WHERE
         event = 'UserPickedProductTypes'
-        and from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ execution_date - macros.timedelta(hours=1) }}')
+        and from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
         and from_iso8601_timestamp(timestamp) <= from_iso8601_timestamp('{{ execution_date }}')
 """
 with Dag as dag:
@@ -116,7 +124,7 @@ with Dag as dag:
     move_results = S3CSVtoParquet(
         task_id='move_results',
         source_s3_key='s3://scalez-airflow/csv-sessions/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
-        dest_s3_key='s3://scalez-airflow/sessions/date={{ execution_date - macros.timedelta(hours=1) }}/{{task_instance_key_str}}.parquet'
+        dest_s3_key='s3://scalez-airflow/sessions/date={{ prev_ds }}/{{execution_date}}.parquet'
     )
 
     # build_table = ""
