@@ -79,7 +79,8 @@ class S3FileTransformOperator(BaseOperator):
                 result = subprocess.run(["ls", "-l", 'dags'], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
-                subprocess.Popen(["chmod", "777", f"dags/{self.transform_script}"]).communicate()
+                subprocess.Popen(["chown", "airflow:airflow", f"dags/{self.transform_script}"])
+                subprocess.Popen(["chmod", "777", f"dags/{self.transform_script}"])
                 result = subprocess.run(["ls", "-l", 'dags'], universal_newlines=True, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
                 print(result.stdout)
