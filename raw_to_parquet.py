@@ -97,8 +97,7 @@ class S3FileTransformOperator(BaseOperator):
                 process = subprocess.Popen(
                     [f'{dir}/{self.transform_script}', f_source.name, f_dest.name],
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    close_fds=True
+                    stderr=subprocess.STDOUT
                 )
 
                 self.log.info("Output:")
