@@ -1,4 +1,5 @@
 from airflow.models import DAG
+import os
 from airflow.contrib.operators.aws_athena_operator import AWSAthenaOperator
 # from airflow.operators.s3_file_transform_operator import S3FileTransformOperator
 from datetime import datetime
@@ -76,20 +77,22 @@ class S3FileTransformOperator(BaseOperator):
             f_source.flush()
 
             if self.transform_script is not None:
-                result = subprocess.run(["ls", "-l", 'dags'], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                dir = os.path.dirname(os.path.abspath(__file__))
+                result = subprocess.run(["ls", "-l", f'{dir}/dags/'],
+                                        universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
-                subprocess.Popen(["chown", "airflow:airflow", f"dags/{self.transform_script}"])
-                result = subprocess.Popen(["who"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                subprocess.Popen(["chown", "airflow:airflow", f"{dir}/dags/{self.transform_script}"])
+                result = subprocess.Popen(["who"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
-                subprocess.Popen(["chmod", "775", f"dags/{self.transform_script}"])
+                subprocess.run(f"chmod +x {dir}/dags/{self.transform_script}")
                 result = subprocess.run(["ls", "-l", 'dags'], universal_newlines=True, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
                 process = subprocess.Popen(
-                    [f'dags/{self.transform_script}', f_source.name, f_dest.name],
+                    [f'{dir}/dags/{self.transform_script}', f_source.name, f_dest.name],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     close_fds=True
