@@ -168,7 +168,7 @@ with Dag as dag:
         task_id='move_results',
         source_s3_key='s3://scalez-airflow/csv-sessions/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
         dest_s3_key='s3://scalez-airflow/sessions/date={{ execution_date - macros.timedelta(hours=1) }}/{{task_instance_key_str}}.parquet',
-        transform_script='csv_to_parquet.py'
+        transform_script='utils/csv_to_parquet.py'
     )
 
     # build_table = ""
