@@ -78,16 +78,16 @@ class S3FileTransformOperator(BaseOperator):
 
             if self.transform_script is not None:
                 dir = os.path.dirname(os.path.abspath(__file__))
-                result = subprocess.run(["ls", "-l", f'{dir}/dags/'],
+                result = subprocess.run(["ls", "-l", dir],
                                         universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
-                subprocess.Popen(["chown", "airflow:airflow", f"{dir}/dags/{self.transform_script}"])
+                subprocess.Popen(["chown", "airflow:airflow", f"{dir}/{self.transform_script}"])
                 result = subprocess.Popen(["who"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
-                subprocess.run(f"chmod +x {dir}/dags/{self.transform_script}")
-                result = subprocess.run(["ls", "-l", 'dags'], universal_newlines=True, stdout=subprocess.PIPE,
+                subprocess.run(f"chmod +x {dir}/{self.transform_script}")
+                result = subprocess.run(["ls", "-l", dir], universal_newlines=True, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
