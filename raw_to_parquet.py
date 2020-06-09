@@ -1,10 +1,8 @@
 from airflow.models import DAG
-import os
 from airflow.contrib.operators.aws_athena_operator import AWSAthenaOperator
-# from airflow.operators.s3_file_transform_operator import S3FileTransformOperator
+import pandas as pd
 from datetime import datetime
 from tempfile import NamedTemporaryFile
-import subprocess
 import sys
 
 from airflow.exceptions import AirflowException
@@ -13,7 +11,7 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
 
-class S3FileTransformOperator(BaseOperator):
+class S3CSVtoParquet(BaseOperator):
 
     template_fields = ('source_s3_key', 'dest_s3_key')
     template_ext = ()
@@ -32,7 +30,7 @@ class S3FileTransformOperator(BaseOperator):
             dest_verify=None,
             replace=False,
             *args, **kwargs):
-        super(S3FileTransformOperator, self).__init__(*args, **kwargs)
+        super(S3CSVtoParquet, self).__init__(*args, **kwargs)
         self.source_s3_key = source_s3_key
         self.source_aws_conn_id = source_aws_conn_id
         self.source_verify = source_verify
@@ -76,45 +74,8 @@ class S3FileTransformOperator(BaseOperator):
                 source_s3_key_object.download_fileobj(Fileobj=f_source)
             f_source.flush()
 
-            if self.transform_script is not None:
-                dir = os.path.dirname(os.path.abspath(__file__))
-                result = subprocess.run(["ls", "-l", dir],
-                                        universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                print(result.stdout)
-                print(result.stderr)
-                subprocess.Popen(["chown", "airflow:airflow", f"{dir}/utils"])
-                # result = subprocess.Popen(["who"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                # print(result.stdout)
-                # print(result.stderr)
-                result = subprocess.Popen(["chmod", "0755 ", f"{dir}/{self.transform_script}"],
-                                 universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                print(result.stdout)
-                print(result.stderr)
-                result = subprocess.run(["ls", "-l", dir], universal_newlines=True, stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-                print(result.stdout)
-                print(result.stderr)
-                process = subprocess.Popen(
-                    [f'{dir}/{self.transform_script}', f_source.name, f_dest.name],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT
-                )
-
-                self.log.info("Output:")
-                for line in iter(process.stdout.readline, b''):
-                    self.log.info(line.decode(self.output_encoding).rstrip())
-
-                process.wait()
-
-                if process.returncode > 0:
-                    raise AirflowException(
-                        "Transform script failed: {0}".format(process.returncode)
-                    )
-                else:
-                    self.log.info(
-                        "Transform script successful. Output temporarily located at %s",
-                        f_dest.name
-                    )
+            # transform to parquet
+            pd.read_csv(f_source.name).to_parquet(f_dest.name)
 
             self.log.info("Uploading transformed file to S3")
             f_dest.flush()
@@ -163,11 +124,10 @@ with Dag as dag:
         database='my_database'
     )
 
-    move_results = S3FileTransformOperator(
+    move_results = S3CSVtoParquet(
         task_id='move_results',
         source_s3_key='s3://scalez-airflow/csv-sessions/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
-        dest_s3_key='s3://scalez-airflow/sessions/date={{ execution_date - macros.timedelta(hours=1) }}/{{task_instance_key_str}}.parquet',
-        transform_script='utils/csv_to_parquet.py'
+        dest_s3_key='s3://scalez-airflow/sessions/date={{ execution_date - macros.timedelta(hours=1) }}/{{task_instance_key_str}}.parquet'
     )
 
     # build_table = ""
