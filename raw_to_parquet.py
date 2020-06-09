@@ -86,7 +86,7 @@ class S3FileTransformOperator(BaseOperator):
                 result = subprocess.Popen(["who"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print(result.stdout)
                 print(result.stderr)
-                subprocess.run(f"chmod +x {dir}/{self.transform_script}")
+                subprocess.Popen(["chmod", "+x ", f"{dir}/{self.transform_script}"])
                 result = subprocess.run(["ls", "-l", dir], universal_newlines=True, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
                 print(result.stdout)
