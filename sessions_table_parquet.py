@@ -64,7 +64,8 @@ class S3CSVtoParquet(BaseOperator):
             f_source.flush()
 
             # transform to parquet
-            pd.read_csv(f_source.name).to_parquet(f_dest.name)
+            pd.read_csv(f_source.name).astype({"is_wishlist_open": bool, 'user_id': str, 'task_id': str})\
+                .to_parquet(f_dest.name)
 
             self.log.info("Uploading transformed file to S3")
             f_dest.flush()
