@@ -91,11 +91,10 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
-    'schedule_interval': '@hourly',
+    'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('sessions_table', catchup=True, default_args=default_args)
+Dag = DAG('sessions_table', schedule_interval='0 * * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
