@@ -114,7 +114,7 @@ query = """
     CAST("json_extract"("payload", '$.position') AS varchar) "position",
     CAST("json_extract"("payload", '$.ruleid') AS varchar) "rule_id",
     CAST("json_extract"("payload", '$.productid') AS varchar) "product_id",
-    case when CAST("json_extract"("payload", '$.action') AS varchar) is not null then CAST("json_extract"("payload", '$.action') AS varchar) else CAST("json_extract"("payload", '$.actionname') AS varchar) "action_name"
+    (case when CAST("json_extract"("payload", '$.action') AS varchar) is not null then CAST("json_extract"("payload", '$.action') AS varchar) else CAST("json_extract"("payload", '$.actionname') AS varchar) end )"action_name"
     FROM
         internal.scalez_events
     WHERE
