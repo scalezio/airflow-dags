@@ -95,7 +95,7 @@ default_args = {
     'schedule_interval': '@hourly',
 }
 
-Dag = DAG('sessions_table_builder', catchup=True, default_args=default_args)
+Dag = DAG('sessions_table', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
