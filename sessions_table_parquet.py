@@ -86,13 +86,13 @@ class XComEnabledAWSAthenaOperator(AWSAthenaOperator):
 default_args = {
     'owner': 'scalez',
     'depends_on_past': True,
-    'start_date': datetime(2020, 6, 8),
+    'start_date': datetime(2020, 5, 15),
     'email': ['daniel@scalez.io'],
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 2,
+    'retries': 1,
     'retry_delay': timedelta(minutes=5),
-    'schedule_interval': '@daily',
+    'schedule_interval': '@hourly',
 }
 
 Dag = DAG('sessions_table_builder', catchup=True, default_args=default_args)
@@ -100,16 +100,34 @@ Dag = DAG('sessions_table_builder', catchup=True, default_args=default_args)
 bucket_name = "scalez-airflow"
 query = """
     SELECT
-    from_iso8601_timestamp(timestamp),
+    from_iso8601_timestamp(timestamp) timestamp,
     CAST("json_extract"("payload", '$.userid') AS varchar) "user_id",
     CAST("json_extract"("payload", '$.sessionid') AS varchar) "session_id",
+    case when "json_extract"("payload", '$.taskresultname') is not null then cast("json_extract"("payload", '$.taskresultname') AS varchar) else CAST("json_extract"("payload", '$.taskresulttype') AS varchar) end "task_result_type",
     CAST("json_extract"("payload", '$.taskname') AS varchar) "task_name",
-    CAST("json_extract"("payload", '$.taskresultname') AS varchar) "task_result_name",
-    CAST("json_extract"("payload", '$.taskid') AS varchar) "task_id"
+    CAST("json_extract"("payload", '$.taskid') AS varchar) "task_id",
+    
+    (case when event = 'UserRatedRule' then CAST("json_extract"("payload", '$.rate') AS varchar) else NULL end) "rule_rate",
+    (case when event = 'UserRatedProduct' then CAST("json_extract"("payload", '$.rate') AS varchar) else NULL end) "product_rate",
+    (case when event = 'UserGaveFeedback' then CAST("json_extract"("payload", '$.rate') AS varchar) else NULL end) "feedback_rate",
+    (case when event = 'UserOpenedWishlist' then true else NULL end) "is_wishlist_open",
+    CAST("json_extract"("payload", '$.styleid') AS varchar) "style_id",
+    CAST("json_extract"("payload", '$.position') AS varchar) "position",
+    CAST("json_extract"("payload", '$.ruleid') AS varchar) "rule_id",
+    CAST("json_extract"("payload", '$.productid') AS varchar) "product_id",
+    case when CAST("json_extract"("payload", '$.action') AS varchar) is not null then CAST("json_extract"("payload", '$.action') AS varchar) else CAST("json_extract"("payload", '$.actionname') AS varchar) "action_name"
     FROM
         internal.scalez_events
     WHERE
-        event = 'UserPickedProductTypes'
+        
+        ("event" = 'UserRatedRule' 
+        OR 
+        "event" = 'UserRatedProduct' 
+        OR  "event" = 'UserGaveFeedback' 
+        OR "event" = 'UserOpenedWishlist' 
+        OR "event" = 'UserAction' 
+        OR "event" = 'UserPickedProductTypes'  
+        OR "event" = 'UserRemovedProduct')
         and from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
         and from_iso8601_timestamp(timestamp) <= from_iso8601_timestamp('{{ execution_date }}')
 """
