@@ -155,6 +155,7 @@ with Dag as dag:
     # update_partitions = ""
 
 move_results.set_upstream(run_query)
+run_query.set_upstream(fix_partitions)
 
 
 
