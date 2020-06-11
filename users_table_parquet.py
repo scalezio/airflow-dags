@@ -154,8 +154,7 @@ with Dag as dag:
     # build_table = ""
     # update_partitions = ""
 
-move_results.set_upstream(run_query)
-run_query.set_upstream(fix_partitions)
+move_results >> run_query >> run_query
 
 
 
