@@ -71,6 +71,9 @@ class S3CSVtoParquet(BaseOperator):
             })
             df.loc[(df.rule_id == 'nan'), 'ad_id'] = ''
             df.loc[(df.user_id == 'nan'), 'user_id'] = ''
+            df.loc[(df.attribute_name == np.NaN), 'attribute_name'] = ''
+            df.loc[(df.attribute_value == np.NaN), 'attribute_value'] = ''
+            df.loc[(df.user_value == np.NaN), 'user_value'] = ''
             df.loc[(df.ref_url == np.NaN), 'ref_url'] = ''
             df.loc[(df.utm_source == np.NaN), 'utm_source'] = ''
             df.loc[(df.user_value == np.NaN), 'user_value'] = ''
@@ -104,42 +107,40 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('users_table', schedule_interval='0 * * * *', catchup=True, default_args=default_args)
+Dag = DAG('users_attributes_table', schedule_interval='0 * * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
     SELECT
         from_iso8601_timestamp(timestamp) timestamp,
         CAST("json_extract"("payload", '$.userid') AS varchar) "user_id",
-        CAST("json_extract"("payload", '$.utmcampiang') AS varchar) "ad_id",
-        CAST("json_extract"("payload", '$.utmrefurl') AS varchar) "ref_url",
-        CAST("json_extract"("payload", '$.utmsource') AS varchar) "utm_source",
-        (case when event='NewSubscriber' then 1 else 0 end) is_new_subscriber
+        CAST("json_extract"("payload", '$.attributename') AS varchar) "attribute_name",
+        CAST("json_extract"("payload", '$.attributevalue') AS varchar) "attribute_value",
+        CAST("json_extract"("payload", '$.uservalue') AS varchar) "user_value"
     FROM
         internal.scalez_events
     WHERE 
-        "event" = 'UserClickedReferral' OR 
-        "event" = 'NewSubscriber' and 
-        from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
-        and from_iso8601_timestamp(timestamp) <= from_iso8601_timestamp('{{ execution_date }}')
+        "event" = 'NewUserAttribute' 
+        AND from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
+        AND from_iso8601_timestamp(timestamp) <= from_iso8601_timestamp('{{ execution_date }}')
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
-        task_id='run_query_users',
+        task_id='run_query',
         query=query,
-        output_location='s3://scalez-airflow/csv-users/',
+        output_location='s3://scalez-airflow/csv-users-attributes/',
         database='my_database'
     )
 
     move_results = S3CSVtoParquet(
-        task_id='move_results_users',
-        source_s3_key='s3://scalez-airflow/csv-users/{{ task_instance.xcom_pull(task_ids="run_query_users") }}.csv',
-        dest_s3_key='s3://scalez-airflow/users/date={{ prev_ds }}/{{execution_date}}.parquet'
+        task_id='move_results',
+        source_s3_key='s3://scalez-airflow/csv-users-attributes/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
+        dest_s3_key='s3://scalez-airflow/users-attributes/date={{ prev_ds }}/{{execution_date}}.parquet'
     )
 
     fix_partitions = XComEnabledAWSAthenaOperator(
-        task_id='fix_partitions_users',
-        query="MSCK REPAIR TABLE silver_tables.users;",
+        task_id='fix_partitions',
+        query="MSCK REPAIR TABLE silver_tables.users_attributes;",
         output_location='s3://scalez-airflow/repair/',
         database='my_database'
     )
