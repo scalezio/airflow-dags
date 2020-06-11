@@ -144,7 +144,7 @@ with Dag as dag:
         task_id='run_query',
         query=query,
         output_location='s3://scalez-airflow/csv-sessions/',
-        database='my_database'
+        database='internal'
     )
 
     move_results = S3CSVtoParquet(
@@ -157,7 +157,7 @@ with Dag as dag:
         task_id='fix_partitions',
         query="MSCK REPAIR TABLE silver_tables.sessions;",
         output_location='s3://scalez-airflow/repair/',
-        database='my_database'
+        database='silver_tables'
     )
 
     # build_table = ""
