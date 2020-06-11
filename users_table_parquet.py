@@ -154,7 +154,7 @@ with Dag as dag:
     # build_table = ""
     # update_partitions = ""
 
-move_results >> run_query >> fix_partitions
+run_query >> move_results >> fix_partitions
 
 
 
