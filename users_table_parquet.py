@@ -1,6 +1,7 @@
 from airflow.models import DAG
 from airflow.contrib.operators.aws_athena_operator import AWSAthenaOperator
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 from tempfile import NamedTemporaryFile
 import sys
@@ -66,13 +67,16 @@ class S3CSVtoParquet(BaseOperator):
             # transform to parquet
             df = pd.read_csv(f_source.name).astype({
                 'user_id': str,
-                'task_id': str,
-                'rule_id': str
+                'ad_id': str
             })
-            df.loc[(df.task_id == 'nan'), 'task_id'] = ''
-            df.loc[(df.rule_id == 'nan'), 'rule_id'] = ''
+            df.loc[(df.rule_id == 'nan'), 'ad_id'] = ''
             df.loc[(df.user_id == 'nan'), 'user_id'] = ''
-            df.is_wishlist_open = (df['is_wishlist_open'] == True)
+            df.loc[(df.attribute_name == np.NaN), 'attribute_name'] = ''
+            df.loc[(df.attribute_value == np.NaN), 'attribute_value'] = ''
+            df.loc[(df.user_value == np.NaN), 'user_value'] = ''
+            df.loc[(df.ref_url == np.NaN), 'ref_url'] = ''
+            df.loc[(df.utm_source == np.NaN), 'utm_source'] = ''
+            df.loc[(df.user_value == np.NaN), 'user_value'] = ''
             df.to_parquet(f_dest.name)
 
             self.log.info("Uploading transformed file to S3")
@@ -103,59 +107,46 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('sessions_table', schedule_interval='0 * * * *', catchup=True, default_args=default_args)
+Dag = DAG('users_table', schedule_interval='0 * * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
     SELECT
-    from_iso8601_timestamp(timestamp) timestamp,
-    CAST("json_extract"("payload", '$.userid') AS varchar) "user_id",
-    CAST("json_extract"("payload", '$.sessionid') AS varchar) "session_id",
-    case when "json_extract"("payload", '$.taskresultname') is not null then cast("json_extract"("payload", '$.taskresultname') AS varchar) else CAST("json_extract"("payload", '$.taskresulttype') AS varchar) end "task_result_type",
-    CAST("json_extract"("payload", '$.taskname') AS varchar) "task_name",
-    CAST("json_extract"("payload", '$.taskid') AS varchar) "task_id",
-    
-    (case when event = 'UserRatedRule' then CAST("json_extract"("payload", '$.rate') AS varchar) else NULL end) "rule_rate",
-    (case when event = 'UserRatedProduct' then CAST("json_extract"("payload", '$.rate') AS varchar) else NULL end) "product_rate",
-    (case when event = 'UserGaveFeedback' then CAST("json_extract"("payload", '$.rate') AS varchar) else NULL end) "feedback_rate",
-    (case when event = 'UserOpenedWishlist' then true else NULL end) "is_wishlist_open",
-    CAST("json_extract"("payload", '$.styleid') AS varchar) "style_id",
-    CAST("json_extract"("payload", '$.position') AS varchar) "position",
-    CAST("json_extract"("payload", '$.ruleid') AS varchar) "rule_id",
-    CAST("json_extract"("payload", '$.productid') AS varchar) "product_id",
-    (case when CAST("json_extract"("payload", '$.action') AS varchar) is not null then CAST("json_extract"("payload", '$.action') AS varchar) else CAST("json_extract"("payload", '$.actionname') AS varchar) end )"action_name"
+        from_iso8601_timestamp(timestamp) timestamp,
+        CAST("json_extract"("payload", '$.userid') AS varchar) "user_id",
+        CAST("json_extract"("payload", '$.attributename') AS varchar) "attribute_name",
+        CAST("json_extract"("payload", '$.attributevalue') AS varchar) "attribute_value",
+        CAST("json_extract"("payload", '$.uservalue') AS varchar) "user_value",
+        CAST("json_extract"("payload", '$.utmcampiang') AS varchar) "ad_id",
+        CAST("json_extract"("payload", '$.utmrefurl') AS varchar) "ref_url",
+        CAST("json_extract"("payload", '$.utmsource') AS varchar) "utm_source",
+        (case when event='NewSubscriber' then 1 else 0 end) is_new_subscriber
     FROM
         internal.scalez_events
-    WHERE
-        
-        ("event" = 'UserRatedRule' 
-        OR 
-        "event" = 'UserRatedProduct' 
-        OR  "event" = 'UserGaveFeedback' 
-        OR "event" = 'UserOpenedWishlist' 
-        OR "event" = 'UserAction' 
-        OR "event" = 'UserPickedProductTypes'  
-        OR "event" = 'UserRemovedProduct')
-        and from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
+    WHERE 
+        "event" = 'NewUserAttribute' OR 
+        "event" = 'UserClickedReferral' OR 
+        "event" = 'NewSubscriber' and 
+        from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
         and from_iso8601_timestamp(timestamp) <= from_iso8601_timestamp('{{ execution_date }}')
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
         task_id='run_query',
         query=query,
-        output_location='s3://scalez-airflow/csv-sessions/',
+        output_location='s3://scalez-airflow/csv-users/',
         database='my_database'
     )
 
     move_results = S3CSVtoParquet(
         task_id='move_results',
-        source_s3_key='s3://scalez-airflow/csv-sessions/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
-        dest_s3_key='s3://scalez-airflow/sessions/date={{ prev_ds }}/{{execution_date}}.parquet'
+        source_s3_key='s3://scalez-airflow/csv-users/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
+        dest_s3_key='s3://scalez-airflow/users/date={{ prev_ds }}/{{execution_date}}.parquet'
     )
 
     fix_partitions = XComEnabledAWSAthenaOperator(
         task_id='fix_partitions',
-        query="MSCK REPAIR TABLE silver_tables.sessions;",
+        query="MSCK REPAIR TABLE silver_tables.users;",
         output_location='s3://scalez-airflow/repair/',
         database='my_database'
     )
