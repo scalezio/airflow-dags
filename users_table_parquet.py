@@ -132,20 +132,20 @@ query = """
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
-        task_id='run_query',
+        task_id='run_query_users',
         query=query,
         output_location='s3://scalez-airflow/csv-users/',
         database='my_database'
     )
 
     move_results = S3CSVtoParquet(
-        task_id='move_results',
+        task_id='move_results_users',
         source_s3_key='s3://scalez-airflow/csv-users/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
         dest_s3_key='s3://scalez-airflow/users/date={{ prev_ds }}/{{execution_date}}.parquet'
     )
 
     fix_partitions = XComEnabledAWSAthenaOperator(
-        task_id='fix_partitions',
+        task_id='fix_partitions_users',
         query="MSCK REPAIR TABLE silver_tables.users;",
         output_location='s3://scalez-airflow/repair/',
         database='my_database'
