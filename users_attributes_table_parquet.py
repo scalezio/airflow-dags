@@ -66,16 +66,11 @@ class S3CSVtoParquet(BaseOperator):
 
             # transform to parquet
             df = pd.read_csv(f_source.name).astype({
-                'user_id': str,
-                'ad_id': str
+                'user_id': str
             })
-            df.loc[(df.rule_id == 'nan'), 'ad_id'] = ''
             df.loc[(df.user_id == 'nan'), 'user_id'] = ''
             df.loc[(df.attribute_name == np.NaN), 'attribute_name'] = ''
             df.loc[(df.attribute_value == np.NaN), 'attribute_value'] = ''
-            df.loc[(df.user_value == np.NaN), 'user_value'] = ''
-            df.loc[(df.ref_url == np.NaN), 'ref_url'] = ''
-            df.loc[(df.utm_source == np.NaN), 'utm_source'] = ''
             df.loc[(df.user_value == np.NaN), 'user_value'] = ''
             df.to_parquet(f_dest.name)
 

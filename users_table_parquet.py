@@ -69,7 +69,7 @@ class S3CSVtoParquet(BaseOperator):
                 'user_id': str,
                 'ad_id': str
             })
-            df.loc[(df.rule_id == 'nan'), 'ad_id'] = ''
+            df.loc[(df.ad_id == 'nan'), 'ad_id'] = ''
             df.loc[(df.user_id == 'nan'), 'user_id'] = ''
             df.loc[(df.ref_url == np.NaN), 'ref_url'] = ''
             df.loc[(df.utm_source == np.NaN), 'utm_source'] = ''
