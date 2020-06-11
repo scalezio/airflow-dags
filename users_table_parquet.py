@@ -73,7 +73,6 @@ class S3CSVtoParquet(BaseOperator):
             df.loc[(df.user_id == 'nan'), 'user_id'] = ''
             df.loc[(df.ref_url == np.NaN), 'ref_url'] = ''
             df.loc[(df.utm_source == np.NaN), 'utm_source'] = ''
-            df.loc[(df.user_value == np.NaN), 'user_value'] = ''
             df.to_parquet(f_dest.name)
 
             self.log.info("Uploading transformed file to S3")
