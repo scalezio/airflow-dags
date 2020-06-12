@@ -137,7 +137,7 @@ query = """
         OR "event" = 'UserPickedProductTypes'  
         OR "event" = 'UserRemovedProduct')
         and date = date '{{ prev_ds }}'
-        and hour = {{ prev_execution_date.hour() }}
+        and hour = {{ prev_execution_date.strftime("%H") }}
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
