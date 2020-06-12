@@ -136,8 +136,8 @@ query = """
         OR "event" = 'UserAction' 
         OR "event" = 'UserPickedProductTypes'  
         OR "event" = 'UserRemovedProduct')
-        and from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
-        and from_iso8601_timestamp(timestamp) <= from_iso8601_timestamp('{{ execution_date }}')
+        and date = date '{{ prev_ds }}'
+        and hour = {{ prev_execution_date.hour() }}
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(

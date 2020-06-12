@@ -117,9 +117,9 @@ query = """
     FROM
         internal.scalez_events
     WHERE 
-        "event" = 'UserClickedReferral' OR 
-        "event" = 'NewSubscriber' and 
-        from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
+        ("event" = 'UserClickedReferral' OR 
+        "event" = 'NewSubscriber')
+        and from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
         and from_iso8601_timestamp(timestamp) <= from_iso8601_timestamp('{{ execution_date }}')
 """
 with Dag as dag:
