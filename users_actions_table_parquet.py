@@ -67,19 +67,19 @@ class S3CSVtoParquet(BaseOperator):
             # transform to parquet
             df = pd.read_csv(f_source.name, parse_dates=['timestamp']).astype({
                 'user_id': str,
-                'rate': str,
-                'feedback': str,
-                'sessionid': str,
-                'tasktype': str,
-                'taskname': str,
+                'feedback_rate': str,
+                'feedback_text': str,
+                'session_id': str,
+                'task_type': str,
+                'task_name': str,
 
             })
-            df.loc[(df.rate == 'nan'), 'rate'] = ''
+            df.loc[(df.feedback_text == 'nan'), 'feedback_text'] = ''
             df.loc[(df.user_id == 'nan'), 'user_id'] = ''
-            df.loc[(df.feedback == 'nan'), 'feedback'] = ''
-            df.loc[(df.sessionid == 'nan'), 'sessionid'] = ''
-            df.loc[(df.tasktype == 'nan'), 'tasktype'] = ''
-            df.loc[(df.taskname == 'nan'), 'taskname'] = ''
+            df.loc[(df.feedback_rate == 'nan'), 'feedback_rate'] = ''
+            df.loc[(df.session_id == 'nan'), 'session_id'] = ''
+            df.loc[(df.task_type == 'nan'), 'task_type'] = ''
+            df.loc[(df.task_name == 'nan'), 'task_name'] = ''
 
             df.to_parquet(f_dest.name, coerce_timestamps='ms', allow_truncated_timestamps=True)
 
