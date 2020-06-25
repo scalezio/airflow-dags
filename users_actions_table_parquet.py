@@ -122,6 +122,7 @@ query = """
         CAST("json_extract"("payload", '$.userid') AS varchar) "user_id",
         CAST("json_extract"("payload", '$.rate') AS varchar) "feedback_rate",
         CAST("json_extract"("payload", '$.feedback') AS varchar) "feedback_text",
+        CAST("json_extract"("payload", '$.taskid') AS varchar) "task_id",
         CAST("json_extract"("payload", '$.sessionid') AS varchar) "session_id",
         CAST("json_extract"("payload", '$.tasktype') AS varchar) "task_type",
         CAST("json_extract"("payload", '$.taskname') AS varchar) "task_name"
