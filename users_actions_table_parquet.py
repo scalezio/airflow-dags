@@ -142,7 +142,7 @@ with Dag as dag:
 
     move_results = S3CSVtoParquet(
         task_id='move_results',
-        source_s3_key='s3://scalez-airflow/csv-users-actions/{{ task_instance.xcom_pull(task_ids="run_query_users") }}.csv',
+        source_s3_key='s3://scalez-airflow/csv-users-actions/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
         dest_s3_key='s3://scalez-airflow/users-actions/date={{ prev_ds }}/{{execution_date}}.parquet'
     )
 
