@@ -1,0 +1,22 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+moto = "*"
+pynt = "*"
+pytest = "*"
+pydevd = "*"
+
+[packages]
+pandas = "*"
+pyarrow = "*"
+numpy = "*"
+apache-airflow = "*"
+
+[requires]
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
