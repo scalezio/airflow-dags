@@ -30,7 +30,7 @@ def invoke_download_events(**context):
 
 def invoke_train_rule_probability_model(**context):
     to_date = context['ds']
-    from_date = context['prev_ds'] or (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')
+    from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=30)).strftime('%Y-%m-%d')
 
     train_rule_probability_model_hook = AwsLambdaHook(function_name='rules-models-prod-train_rule_probability_model',
                                                       region_name='us-east-1')
