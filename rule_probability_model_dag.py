@@ -38,12 +38,12 @@ def invoke_train_rule_probability_model(**context):
     train_rule_probability_model_hook.invoke_lambda(payload)
 
 
-download_events_operator = PythonOperator(task_id='invoke_download_events',
+download_events_operator = PythonOperator(task_id='download_events_operator',
                                           provide_context=True,
                                           python_callable=invoke_download_events,
                                           dag=dag)
 
-train_rule_probability_model_operator = PythonOperator(task_id='invoke_download_events',
+train_rule_probability_model_operator = PythonOperator(task_id='train_rule_probability_model_operator',
                                                        provide_context=True,
                                                        python_callable=invoke_train_rule_probability_model,
                                                        dag=dag)
