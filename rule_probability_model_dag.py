@@ -13,15 +13,20 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=10)
+    'retry_delay': timedelta(minutes=30)
 }
 
-dag = DAG('rule_probability_model', schedule_interval=timedelta(days=1), catchup=True, default_args=default_args)
+days_interval_download = 7
+days_interval_train = 30
+
+dag = DAG('rule_probability_model', schedule_interval=timedelta(days=days_interval_download), catchup=True,
+          default_args=default_args)
 
 
 def invoke_download_events(**context):
     to_date = context['ds']
-    from_date = context['prev_ds'] or (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')
+    from_date = context['prev_ds'] or (
+                datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_download)).strftime('%Y-%m-%d')
 
     download_events_hook = AwsLambdaHook(function_name='rules-models-prod-download_events', region_name='us-east-1')
     payload = json.dumps({"eventName": "UserRatedRule", "fromDate": from_date, "toDate": to_date})
@@ -30,7 +35,7 @@ def invoke_download_events(**context):
 
 def invoke_train_rule_probability_model(**context):
     to_date = context['ds']
-    from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=30)).strftime('%Y-%m-%d')
+    from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
 
     train_rule_probability_model_hook = AwsLambdaHook(function_name='rules-models-prod-train_rule_probability_model',
                                                       region_name='us-east-1')
