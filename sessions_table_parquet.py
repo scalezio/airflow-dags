@@ -67,11 +67,13 @@ class S3CSVtoParquet(BaseOperator):
             df = pd.read_csv(f_source.name).astype({
                 'user_id': str,
                 'task_id': str,
-                'rule_id': str
+                'rule_id': str,
+                'session_id': str
             })
             df.loc[(df.task_id == 'nan'), 'task_id'] = ''
             df.loc[(df.rule_id == 'nan'), 'rule_id'] = ''
             df.loc[(df.user_id == 'nan'), 'user_id'] = ''
+            df.loc[(df.session_id == 'nan'), 'session_id'] = ''
             df.is_wishlist_open = (df['is_wishlist_open'] == True)
             df.to_parquet(f_dest.name)
 
