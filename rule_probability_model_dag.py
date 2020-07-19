@@ -8,11 +8,11 @@ from airflow.utils.dates import days_ago
 default_args = {
     'owner': 'scalez',
     'depends_on_past': False,
-    'start_date': days_ago(1),
+    'start_date': datetime.strptime('2020-07-09', '%Y-%m-%d'),
     'email': ['daniel@scalez.io'],
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 1,
+    'retries': 3,
     'retry_delay': timedelta(minutes=30)
 }
 
@@ -26,7 +26,7 @@ dag = DAG('rule_probability_model', schedule_interval=timedelta(days=days_interv
 def invoke_download_events(**context):
     to_date = context['ds']
     from_date = context['prev_ds'] or (
-                datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_download)).strftime('%Y-%m-%d')
+            datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_download)).strftime('%Y-%m-%d')
 
     download_events_hook = AwsLambdaHook(function_name='rules-models-prod-download_events', region_name='us-east-1')
     payload = json.dumps({"eventName": "UserRatedRule", "fromDate": from_date, "toDate": to_date})
