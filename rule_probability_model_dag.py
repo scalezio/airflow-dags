@@ -1,14 +1,14 @@
 import json
 from datetime import timedelta, datetime
-from airflow.operators.python_operator import PythonOperator
+
 from airflow.contrib.hooks.aws_lambda_hook import AwsLambdaHook
 from airflow.models import DAG
-from airflow.utils.dates import days_ago
+from airflow.operators.python_operator import PythonOperator
 
 default_args = {
     'owner': 'scalez',
     'depends_on_past': False,
-    'start_date': datetime.strptime('2020-07-09', '%Y-%m-%d'),
+    'start_date': datetime.strptime('2020-07-08', '%Y-%m-%d'),
     'email': ['daniel@scalez.io'],
     'email_on_failure': False,
     'email_on_retry': False,
