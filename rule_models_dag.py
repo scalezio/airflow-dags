@@ -22,33 +22,31 @@ dag = DAG('rule_models', schedule_interval=timedelta(days=1), catchup=True,
           default_args=default_args)
 
 
+def invoke_lambda(lambda_name, from_date, to_date, event_name):
+    lambda_hook = AwsLambdaHook(function_name=lambda_name, region_name='us-east-1')
+    payload = json.dumps({"eventName": event_name, "fromDate": from_date, "toDate": to_date})
+    lambda_hook.invoke_lambda(payload)
+
+
 def invoke_download_events(**context):
     to_date = context['ds']
     from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
-
-    download_events_hook = AwsLambdaHook(function_name='rules-models-prod-download_events', region_name='us-east-1')
-    payload = json.dumps({"eventName": "UserRatedRule", "fromDate": from_date, "toDate": to_date})
-    download_events_hook.invoke_lambda(payload)
+    invoke_lambda(lambda_name="rules-models-prod-download_events", from_date=from_date, to_date=to_date,
+                  event_name="UserRatedRule")
 
 
 def invoke_train_rule_probability_model(**context):
     to_date = context['ds']
     from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
-
-    train_rule_probability_model_hook = AwsLambdaHook(function_name='rules-models-prod-train_rule_probability_model',
-                                                      region_name='us-east-1')
-    payload = json.dumps({"eventName": "UserRatedRule", "fromDate": from_date, "toDate": to_date})
-    train_rule_probability_model_hook.invoke_lambda(payload)
+    invoke_lambda(lambda_name="rules-models-prod-train_rule_probability_model", from_date=from_date, to_date=to_date,
+                  event_name="UserRatedRule")
 
 
 def invoke_train_rule_combinations_model(**context):
     to_date = context['ds']
     from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
-
-    train_rule_probability_model_hook = AwsLambdaHook(function_name='rules-models-prod-train_rule_combinations_model',
-                                                      region_name='us-east-1')
-    payload = json.dumps({"eventName": "UserRatedRule", "fromDate": from_date, "toDate": to_date})
-    train_rule_probability_model_hook.invoke_lambda(payload)
+    invoke_lambda(lambda_name="rules-models-prod-train_rule_combinations_model", from_date=from_date, to_date=to_date,
+                  event_name="UserRatedRule")
 
 
 download_events_operator = PythonOperator(task_id='download_events_operator',
