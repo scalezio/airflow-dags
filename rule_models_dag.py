@@ -4,6 +4,7 @@ from datetime import timedelta, datetime
 from airflow.contrib.hooks.aws_lambda_hook import AwsLambdaHook
 from airflow.models import DAG
 from airflow.operators.python_operator import PythonOperator
+from botocore.client import Config
 
 default_args = {
     'owner': 'scalez',
@@ -23,7 +24,10 @@ dag = DAG('rule_models', schedule_interval=timedelta(days=1), catchup=True,
 
 
 def invoke_lambda(lambda_name, from_date, to_date, event_name):
-    lambda_hook = AwsLambdaHook(function_name=lambda_name, region_name='us-east-1')
+    config_dict = {"connect_timeout": 5, "read_timeout": 900}
+    config = Config(**config_dict)
+
+    lambda_hook = AwsLambdaHook(function_name=lambda_name, region_name='us-east-1', config=config)
     payload = json.dumps({"eventName": event_name, "fromDate": from_date, "toDate": to_date})
     lambda_hook.invoke_lambda(payload)
 
