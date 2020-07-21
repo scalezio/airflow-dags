@@ -61,7 +61,7 @@ train_rule_probability_model_operator = PythonOperator(task_id='train_rule_proba
                                                        python_callable=invoke_train_rule_probability_model,
                                                        dag=dag)
 
-train_rule_combinations_model_operator = PythonOperator(task_id='train_rule_probability_model_operator',
+train_rule_combinations_model_operator = PythonOperator(task_id='train_rule_combinations_model_operator',
                                                         provide_context=True,
                                                         python_callable=invoke_train_rule_combinations_model,
                                                         dag=dag)
