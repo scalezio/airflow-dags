@@ -103,7 +103,7 @@ class XComEnabledAWSAthenaOperator(AWSAthenaOperator):
 default_args = {
     'owner': 'scalez',
     'depends_on_past': True,
-    'start_date': datetime(2020, 7, 28),
+    'start_date': datetime(2020, 7, 25),
     'email': ['daniel@scalez.io'],
     'email_on_failure': False,
     'email_on_retry': False,
