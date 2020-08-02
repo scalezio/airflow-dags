@@ -98,7 +98,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('tasks_table', schedule_interval='0 * * * *', catchup=True, default_args=default_args)
+Dag = DAG('tasks_table', schedule_interval='0 5 * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
@@ -118,10 +118,8 @@ query = """
             (SELECT DISTINCT eventname
             FROM internal.scalez_events
             WHERE eventname LIKE '%Task%'
-                    AND date = date '{{ prev_ds }}'
-                    AND hour = {{ prev_execution_date.strftime("%H") }})
+                    AND date = date '{{ prev_ds }}')
         AND date = date '{{ prev_ds }}'
-        AND hour = {{ prev_execution_date.strftime("%H") }}
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(

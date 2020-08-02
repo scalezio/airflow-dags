@@ -111,7 +111,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('user_actions_table', schedule_interval='0 * * * *', catchup=True, default_args=default_args)
+Dag = DAG('user_actions_table', schedule_interval='0 5 * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
@@ -130,8 +130,7 @@ query = """
         internal.scalez_events
     WHERE 
         event = 'UserGaveStylistFeedback'
-        and from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
-        and from_iso8601_timestamp(timestamp) <= from_iso8601_timestamp('{{ execution_date }}')
+         and date = date '{{ prev_ds }}'
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(

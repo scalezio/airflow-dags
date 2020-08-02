@@ -105,7 +105,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('sessions_table', schedule_interval='0 * * * *', catchup=True, default_args=default_args)
+Dag = DAG('sessions_table', schedule_interval='0 5 * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
@@ -139,7 +139,6 @@ query = """
         OR "event" = 'UserPickedProductTypes'  
         OR "event" = 'UserRemovedProduct')
         and date = date '{{ prev_ds }}'
-        and hour = {{ prev_execution_date.strftime("%H") }}
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(

@@ -102,7 +102,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('users_attributes_table', schedule_interval='0 * * * *', catchup=True, default_args=default_args)
+Dag = DAG('users_attributes_table', schedule_interval='0 5 * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
@@ -116,8 +116,7 @@ query = """
         internal.scalez_events
     WHERE 
         "event" = 'NewUserAttribute' 
-        AND from_iso8601_timestamp(timestamp) >= from_iso8601_timestamp('{{ prev_execution_date }}')
-        AND from_iso8601_timestamp(timestamp) <= from_iso8601_timestamp('{{ execution_date }}')
+         and date = date '{{ prev_ds }}'
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
