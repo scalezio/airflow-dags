@@ -105,7 +105,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('sessions_table', schedule_interval='0 5 * * *', catchup=True, default_args=default_args)
+Dag = DAG('sessions_table', schedule_interval='0 8 * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
