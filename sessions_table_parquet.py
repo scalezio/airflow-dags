@@ -105,7 +105,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('sessions_table', schedule_interval='0 8 * * *', catchup=True, default_args=default_args)
+Dag = DAG('sessions_table', schedule_interval='30 4 * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
@@ -138,7 +138,7 @@ query = """
         OR "event" = 'UserAction' 
         OR "event" = 'UserPickedProductTypes'  
         OR "event" = 'UserRemovedProduct')
-        and date = date '{{ prev_ds }}'
+        and date = date '{{ ds }}'
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
@@ -151,12 +151,12 @@ with Dag as dag:
     move_results = S3CSVtoParquet(
         task_id='move_results',
         source_s3_key='s3://scalez-airflow/csv-sessions/{{ task_instance.xcom_pull(task_ids="run_query") }}.csv',
-        dest_s3_key='s3://scalez-airflow/sessions/date={{ prev_ds }}/{{execution_date}}.parquet'
+        dest_s3_key='s3://scalez-airflow/sessions/date={{ ds }}/{{execution_date}}.parquet'
     )
 
     fix_partitions = XComEnabledAWSAthenaOperator(
         task_id='fix_partitions',
-        query="MSCK REPAIR TABLE silver_tables.sessions;",
+        query="ALTER TABLE silver_tables.sessions ADD IF NOT EXISTS PARTITION (date='{{ ds }}') LOCATION 's3://scalez-airflow/sessions/date={{ ds }}/';",
         output_location='s3://scalez-airflow/repair/',
         database='silver_tables'
     )

@@ -137,7 +137,7 @@ with Dag as dag:
 
     fix_partitions = XComEnabledAWSAthenaOperator(
         task_id='fix_partitions_users',
-        query="ALTER TABLE silver_tables.users ADD PARTITION (date={{ ds }}) LOCATION 's3://scalez-airflow/users/date={{ ds }}/';",
+        query="ALTER TABLE silver_tables.users ADD IF NOT EXISTS PARTITION (date='{{ ds }}') LOCATION 's3://scalez-airflow/users/date={{ ds }}/';",
         output_location='s3://scalez-airflow/repair/',
         database='silver_tables'
     )
