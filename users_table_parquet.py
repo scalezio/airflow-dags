@@ -94,8 +94,8 @@ class XComEnabledAWSAthenaOperator(AWSAthenaOperator):
 
 default_args = {
     'owner': 'scalez',
-    'depends_on_past': True,
-    'start_date': datetime(2020, 7, 28),
+    'depends_on_past': False,
+    'start_date': datetime(2020, 8, 3),
     'email': ['daniel@scalez.io'],
     'email_on_failure': False,
     'email_on_retry': False,
@@ -103,7 +103,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-Dag = DAG('users_table', schedule_interval='0 8 * * *', catchup=True, default_args=default_args)
+Dag = DAG('users_table', schedule_interval='30 4 * * *', catchup=True, default_args=default_args)
 
 bucket_name = "scalez-airflow"
 query = """
@@ -119,7 +119,7 @@ query = """
     WHERE 
         ("event" = 'UserClickedReferral' OR 
         "event" = 'NewSubscriber')
-         and date = date '{{ prev_ds }}'
+         and date = date '{{ yesterday_ds }}'
 """
 with Dag as dag:
     run_query = XComEnabledAWSAthenaOperator(
@@ -132,7 +132,7 @@ with Dag as dag:
     move_results = S3CSVtoParquet(
         task_id='move_results_users',
         source_s3_key='s3://scalez-airflow/csv-users/{{ task_instance.xcom_pull(task_ids="run_query_users") }}.csv',
-        dest_s3_key='s3://scalez-airflow/users/date={{ prev_ds }}/{{execution_date}}.parquet'
+        dest_s3_key='s3://scalez-airflow/users/date={{ yesterday_ds }}/{{execution_date}}.parquet'
     )
 
     fix_partitions = XComEnabledAWSAthenaOperator(
