@@ -1,3 +1,5 @@
 -i https://pypi.org/simple
 numpy==1.18.5
 pyarrow==0.17.1
+pandas==1.1.0rc0
+boto3==1.14.24

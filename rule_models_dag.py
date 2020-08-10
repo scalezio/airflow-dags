@@ -1,10 +1,15 @@
 import json
 from datetime import timedelta, datetime
+from io import StringIO
 
+import boto3
+import pandas as pd
 from airflow.contrib.hooks.aws_lambda_hook import AwsLambdaHook
 from airflow.models import DAG
 from airflow.operators.python_operator import PythonOperator
 from botocore.client import Config
+
+from services.dynamo_db_service import DynamoDBService
 
 default_args = {
     'owner': 'scalez',
@@ -32,6 +37,23 @@ def invoke_lambda(lambda_name, from_date, to_date, event_name):
     lambda_hook.invoke_lambda(payload)
 
 
+def download_events_function(**context):
+    to_date = context['ds']
+    from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
+
+    events_db_service = DynamoDBService('connectors-prod-events_table')
+    items = events_db_service.get_query_items(p_key_name='eventName', p_key_value="UserRatedRule",
+                                              s_key_name='timestamp', s_key_value_max=to_date,
+                                              s_key_value_lower=from_date)
+
+    if items:
+        file_name = f'UserRatedRule/raw_events_{from_date}_{to_date}.csv'
+        csv_buffer = StringIO()
+        pd.DataFrame(items).to_csv(csv_buffer)
+        bucket_name = f'rules-models-prod-data-369120691906'
+        boto3.resource('s3').Object(bucket_name, file_name).put(Body=csv_buffer.getvalue())
+
+
 def invoke_download_events(**context):
     to_date = context['ds']
     from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
@@ -55,7 +77,7 @@ def invoke_train_rule_combinations_model(**context):
 
 download_events_operator = PythonOperator(task_id='download_events_operator',
                                           provide_context=True,
-                                          python_callable=invoke_download_events,
+                                          python_callable=download_events_function,
                                           dag=dag)
 
 train_rule_probability_model_operator = PythonOperator(task_id='train_rule_probability_model_operator',
