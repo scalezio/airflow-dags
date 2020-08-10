@@ -57,6 +57,7 @@ def download_events_function(**context):
 def invoke_download_events(**context):
     to_date = context['ds']
     from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
+    print(f'invoke_download_events to_date: {to_date}, from_date: {from_date}')
     invoke_lambda(lambda_name="rules-models-prod-download_events", from_date=from_date, to_date=to_date,
                   event_name="UserRatedRule")
 
