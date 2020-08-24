@@ -89,4 +89,4 @@ train_rule_combinations_model_operator = PythonOperator(task_id='train_rule_comb
                                                         python_callable=train_rule_combination_model,
                                                         dag=dag)
 
-download_events_operator >> [train_rule_probability_model_operator, train_rule_combinations_model_operator]
+download_events_operator >> train_rule_probability_model_operator >> train_rule_combinations_model_operator
