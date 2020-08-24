@@ -10,6 +10,8 @@ from airflow.operators.python_operator import PythonOperator
 from botocore.client import Config
 
 from services.dynamo_db_service import DynamoDBService
+from services.train_rule_probability_model_service import TrainRuleProbabilityModelService
+from services.train_rule_combinations_model_service import TrainRuleCombinationsModelService
 
 default_args = {
     'owner': 'scalez',
@@ -54,26 +56,18 @@ def download_events_function(**context):
         boto3.resource('s3').Object(bucket_name, file_name).put(Body=csv_buffer.getvalue())
 
 
-def invoke_download_events(**context):
+def train_rule_probability_model(**context):
     to_date = context['ds']
     from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
-    print(f'invoke_download_events to_date: {to_date}, from_date: {from_date}')
-    invoke_lambda(lambda_name="rules-models-prod-download_events", from_date=from_date, to_date=to_date,
-                  event_name="UserRatedRule")
+    service = TrainRuleProbabilityModelService()
+    service.train_rule_model(from_date, to_date)
 
 
-def invoke_train_rule_probability_model(**context):
+def train_rule_combination_model(**context):
     to_date = context['ds']
     from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
-    invoke_lambda(lambda_name="rules-models-prod-train_rule_probability_model", from_date=from_date, to_date=to_date,
-                  event_name="UserRatedRule")
-
-
-def invoke_train_rule_combinations_model(**context):
-    to_date = context['ds']
-    from_date = (datetime.strptime(to_date, '%Y-%m-%d') - timedelta(days=days_interval_train)).strftime('%Y-%m-%d')
-    invoke_lambda(lambda_name="rules-models-prod-train_rule_combinations_model", from_date=from_date, to_date=to_date,
-                  event_name="UserRatedRule")
+    service = TrainRuleCombinationsModelService()
+    service.train_rule_model(from_date, to_date)
 
 
 download_events_operator = PythonOperator(task_id='download_events_operator',
@@ -83,12 +77,12 @@ download_events_operator = PythonOperator(task_id='download_events_operator',
 
 train_rule_probability_model_operator = PythonOperator(task_id='train_rule_probability_model_operator',
                                                        provide_context=True,
-                                                       python_callable=invoke_train_rule_probability_model,
+                                                       python_callable=train_rule_probability_model,
                                                        dag=dag)
 
 train_rule_combinations_model_operator = PythonOperator(task_id='train_rule_combinations_model_operator',
                                                         provide_context=True,
-                                                        python_callable=invoke_train_rule_combinations_model,
+                                                        python_callable=train_rule_combination_model,
                                                         dag=dag)
 
 download_events_operator >> [train_rule_probability_model_operator, train_rule_combinations_model_operator]
