@@ -14,8 +14,8 @@ from utils.logger import get_logger
 
 class ModelTrainerService:
     def __init__(self):
-        env = os.getenv('ENV', 'dev')
-        account = os.getenv('AWS_ACCOUNT', '')
+        env = os.getenv('ENV', 'prod')
+        account = os.getenv('AWS_ACCOUNT', '369120691906')
 
         self.logger = get_logger('ModelTrainerService')
 

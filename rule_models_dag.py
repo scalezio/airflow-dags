@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import timedelta, datetime
 from io import StringIO
 
@@ -8,6 +9,9 @@ from airflow.contrib.hooks.aws_lambda_hook import AwsLambdaHook
 from airflow.models import DAG
 from airflow.operators.python_operator import PythonOperator
 from botocore.client import Config
+
+os.environ["ENV"] = 'prod'
+os.environ["AWS_ACCOUNT"] = '369120691906'
 
 from services.dynamo_db_service import DynamoDBService
 from services.train_rule_probability_model_service import TrainRuleProbabilityModelService

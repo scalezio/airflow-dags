@@ -20,12 +20,6 @@ class HierarchyTable:
     PARAMETERS = "parameters"
 
 
-class AthenaEventsDatabase:
-    EVENTS_DATA_BASE_NAME = os.getenv('EVENTS_DATA_BASE_NAME', 'internal')
-    EVENTS_TABLE_NAME = os.getenv('EVENTS_TABLE_NAME', 'scalez_events')
-    QUERY_RESULTS_BUCKET_NAME = os.getenv('QUERY_RESULTS_BUCKET_NAME', f'rules-model-{env}-query-results-{account}')
-
-
 class EventsTable:
     TABLE_NAME = os.getenv('EVENTS_TABLE', f'connectors-{env}-events_table')
     EVENT_NAME = 'eventName'
